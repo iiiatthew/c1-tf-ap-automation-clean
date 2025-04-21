@@ -1,0 +1,101 @@
+name: Sync ConductorOne Access Profiles
+
+on:
+  # Uncomment to enable scheduling 
+  # schedule:
+    # - cron: '0 * * * *'    # Run every hour (60 minutes)
+    # - cron: '* * * * *'  # Run every minute (for testing)
+  workflow_dispatch:        # Allow manual triggering
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+        
+      # # Include this step only if using an S3 backend
+      # - name: Configure AWS credentials
+      #   if: false  # Change to true if using AWS
+      #   uses: aws-actions/configure-aws-credentials@v2
+      #   with:
+      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     aws-region: us-west-2
+          
+      - name: Verify directory structure
+        run: |
+          echo "Root directory:"
+          ls -la
+          echo "Terraform directory:"
+          ls -la terraform/
+          echo "Data directory:"
+          ls -la terraform/data/
+        
+      - name: Terraform Init
+        id: tf_init
+        continue-on-error: true
+        run: |
+          terraform -chdir=terraform init
+        env:
+          TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
+        
+      - name: Generate timestamp for logs
+        id: timestamp
+        run: echo "timestamp=$(date +%Y%m%d_%H%M%S)" >> $GITHUB_OUTPUT
+      
+      - name: Create logs directory
+        if: always()
+        run: mkdir -p logs
+        shell: bash
+      
+      - name: Terraform Plan
+        run: |
+          # Read CSV but encode it as base64 to avoid quote/newline issues
+          CSV_CONTENT=$(cat terraform/data/maps.csv | base64 -w 0)
+          
+          terraform -chdir=terraform plan \
+            -var="c1_client_id=${{ secrets.C1_CLIENT_ID }}" \
+            -var="c1_client_secret=${{ secrets.C1_CLIENT_SECRET }}" \
+            -var="mapping_csv_content_base64=$CSV_CONTENT" \
+            -out=tfplan
+          
+          # Save plan details for logging
+          mkdir -p logs
+          terraform -chdir=terraform show -json tfplan > logs/plan_${{ steps.timestamp.outputs.timestamp }}.json
+          terraform -chdir=terraform show tfplan > logs/plan_${{ steps.timestamp.outputs.timestamp }}.txt
+        
+      - name: Upload plan logs as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-logs-${{ steps.timestamp.outputs.timestamp }}
+          path: logs/
+          retention-days: 14
+          
+      - name: Terraform Apply
+        run: terraform -chdir=terraform apply -auto-approve tfplan
+          
+      - name: Save apply logs
+        if: always()
+        run: |
+          mkdir -p logs
+          terraform -chdir=terraform show -json > logs/state_${{ steps.timestamp.outputs.timestamp }}.json
+      
+      - name: Upload state logs as artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-state-logs-${{ steps.timestamp.outputs.timestamp }}
+          path: logs/
+          retention-days: 14
+      
+      - name: Error notification
+        if: failure()
+        run: |
+          echo "::error::Terraform sync failed at $(date)"
+          echo "::error::See workflow run at https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"

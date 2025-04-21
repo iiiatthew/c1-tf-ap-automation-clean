@@ -1,0 +1,12 @@
+# ConductorOne Tenant Connector Secrets - KEEP THIS FILE SECURE
+# Do not commit this file to version control
+# Rename this file to ".env"
+
+export TF_VAR_c1_server_url="https://yourtenant.conductor.one"
+# export TF_VAR_c1_client_id="yourClientId"
+# export TF_VAR_c1_client_secret="yourClientSecret"
+
+# App Specific Variables
+export TF_VAR_primary_app_id="appIdDefiningAccessProfiles"
+export TF_VAR_target_app_id="appIdReceivingAccessProfileGrants"
+export TF_VAR_ap_request_policy_id="2ouELGvYbcY6WZJYB52iPi0P1Wm"  # Set to Auto-Approve

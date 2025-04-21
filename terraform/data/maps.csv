@@ -1,0 +1,9 @@
+source_resource,target_resource,target_entitlement
+"Supervisory Organization 01","Repository 01",admin
+"Supervisory Organization 01","Repository 01",pull
+"Supervisory Organization 01","Repository 01",push
+"Supervisory Organization 02","Repository 02",admin
+"Supervisory Organization 02","Repository 02",pull
+"Supervisory Organization 02","Repository 02",push
+"Supervisory Organization 03","Repository 03",admin
+"Supervisory Organization 03","Repository 03",pull
