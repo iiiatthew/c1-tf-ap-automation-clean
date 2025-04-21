@@ -52,18 +52,16 @@ From your ConductorOne instance, gather the following IDs:
    - Select your desired policy
    - Copy the ID from the URL
 
+4. **Update variables.tf**: Update the relevant placeholders in the variables.tf file with your collected IDs 
+
 ### 3. Generate API Credentials
 
 Create ConductorOne API credentials:
 
-1. Navigate to Settings → API Clients
-2. Create a new API client with appropriate permissions
+1. Click your user icon → API Keys
+2. Create credential → fill out form
 3. Save the Client ID and Client Secret securely
 
-Needed permissions:
-- View Applications
-- View and Manage Access Profiles
-- View and Manage Grant Policies
 
 ---
 
@@ -83,10 +81,6 @@ export TF_VAR_c1_client_secret="YOUR_C1_CLIENT_SECRET"
 export TF_VAR_primary_app_id="YOUR_PRIMARY_APP_ID"
 export TF_VAR_target_app_id="YOUR_TARGET_APP_ID"
 export TF_VAR_ap_request_policy_id="YOUR_POLICY_ID"
-
-# Optional overrides
-# export TF_VAR_c1_server_api_path="/api/v1"
-# export TF_VAR_csv_file_path="../data/maps.csv"
 ```
 
 Load these variables:
@@ -189,10 +183,10 @@ Edit `.github/workflows/sync.yml` to set your desired schedule:
 
 ```yaml
 on:
-  workflow_dispatch:  # Manual trigger
-  # Uncomment and set your preferred schedule
+  # Uncomment to enable scheduling 
   # schedule:
-  #  - cron: '0 0 * * *'  # Daily at midnight UTC
+    # - cron: '0 * * * *'    # Run every hour (60 minutes)
+    # - cron: '* * * * *'  # Run every minute (for testing)
 ```
 
 ### 3. Test Workflow
@@ -316,11 +310,8 @@ To update resource-to-entitlement mappings:
 1. **GitHub Actions Run Logs**: 
    - Check workflow runs in the Actions tab
    - Download plan/apply logs as artifacts
-   
-2. **ConductorOne Audit Logs**:
-   - Check for API-initiated changes
 
-3. **Error Handling**:
+2. **Error Handling**:
    - GitHub Actions will report failures via workflow status
    - Failed runs won't modify the environment (require plan approval)
 
@@ -344,11 +335,6 @@ The CSV file must have proper formatting:
 - Headers must match expected fields in your implementation
 - Data must be properly cleaned (no invalid characters)
 - Permissions must match valid values for your target application
-
-Optional: Use the included validation script:
-```bash
-python scripts/validate_csv.py
-```
 
 ### Access Issues
 

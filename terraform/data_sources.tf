@@ -15,25 +15,25 @@ data "http" "conductorone_get_token" {
   request_body = "grant_type=client_credentials&client_id=${var.c1_client_id}&client_secret=${var.c1_client_secret}"
 }
 
-# Get resource types for Primary App (e.g., Workday)
+# Get resource types for Primary App 
 data "http" "primary_app_resource_types" {
   url             = "${var.c1_server_url}/api/v1/apps/${var.primary_app_id}/resource_types"
   request_headers = { Accept = "application/json", Authorization = "Bearer ${local.access_token}" }
 }
 
-# Get Primary App Resources (e.g., SOs)
+# Get Primary App Resources 
 data "http" "primary_app_resources" {
   url             = local.primary_resource_type_id == null ? "" : "${var.c1_server_url}/api/v1/apps/${var.primary_app_id}/resource_types/${local.primary_resource_type_id}/resources"
   request_headers = { Accept = "application/json", Authorization = "Bearer ${local.access_token}" }
 }
 
-# Get resource types for Target App (e.g., GitHub) 
+# Get resource types for Target App  
 data "http" "target_app_resource_types" {
   url             = "${var.c1_server_url}/api/v1/apps/${var.target_app_id}/resource_types"
   request_headers = { Accept = "application/json", Authorization = "Bearer ${local.access_token}" }
 }
 
-# Get Target App Resources (e.g., Repos) 
+# Get Target App Resources 
 data "http" "target_app_resources" {
   url             = local.target_resource_type_id == null ? "" : "${var.c1_server_url}/api/v1/apps/${var.target_app_id}/resource_types/${local.target_resource_type_id}/resources"
   request_headers = { Accept = "application/json", Authorization = "Bearer ${local.access_token}" }

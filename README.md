@@ -29,23 +29,23 @@ This solution utilizes the ConductorOne Terraform provider and supplements it wi
 .
 ├── .github/
 │   └── workflows/
-│       └── sync.yml      # GitHub Actions workflow for automation
+│       └── sync.yml                # GitHub Actions workflow for automation
 ├── terraform/
 │   ├── data/
-│   │   └── maps.csv   # Source of truth for profile mappings
-│   ├── variables.tf      # Input variable definitions
-│   ├── providers.tf      # Terraform and provider configurations
-│   ├── data_sources.tf   # Data sources (CSV file, HTTP API calls)
-│   ├── locals.tf         # Data transformation and mapping logic
-│   ├── profiles.tf       # Core Access Profile resources
-│   ├── automation.tf     # Bundle Automation via null_resource/HTTP
-│   └── backend.tf        # (Recommended) Remote state backend config
+│   │   └── maps.csv                # Source of truth for profile mappings
+│   ├── variables.tf                # Input variable definitions
+│   ├── providers.tf                # Terraform and provider configurations
+│   ├── data_sources.tf             # Data sources (CSV file, HTTP API calls)
+│   ├── locals.tf                   # Data transformation and mapping logic
+│   ├── profiles.tf                 # Core Access Profile resources
+│   ├── automation.tf               # Bundle Automation via null_resource/HTTP
+│   └── backend.tf                  # (Recommended) Remote state backend config
 ├── scripts/
-│   └── validate_csv.py   # (Optional) Script to validate CSV format
-├── .env.example          # Example environment variables file
-├── .gitignore            # Git ignore file
+│   └── validate_csv.py             # (Optional) Script to validate CSV format
+├── .env.example                    # Example environment variables file
+├── .gitignore                      # Git ignore file
 ├── deployment_and_testing_guide.md # Detailed setup guide
-└── README.md             # This file
+└── README.md                       # This file
 ```
 
 ## Configuration
@@ -60,7 +60,6 @@ This solution utilizes the ConductorOne Terraform provider and supplements it wi
         export TF_VAR_primary_app_id="YOUR_PRIMARY_APP_ID"
         export TF_VAR_target_app_id="YOUR_TARGET_APP_ID"
         export TF_VAR_ap_request_policy_id="YOUR_POLICY_ID"
-        # ... other optional overrides ...
         ```
     *   **Terraform Cloud Variables:** If using Terraform Cloud, configure variables in the workspace settings.
 
