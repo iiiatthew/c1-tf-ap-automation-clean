@@ -47,9 +47,9 @@ From your ConductorOne instance, gather the following IDs:
    - Navigate to Applications in C1
    - Copy the ID from the URL when viewing the target application
 
-3. **Grant Policy ID**: The ID of the grant policy to attach to access profiles
-   - Navigate to Policies → Grant Policies
-   - Select your desired policy
+3. **Request Policy ID**: The ID of the request policy to attach to access profiles
+   - Navigate to Policies
+   - Select your desired request policy
    - Copy the ID from the URL
 
 4. **Update variables.tf**: Update the relevant placeholders in the variables.tf file with your collected IDs 
@@ -339,7 +339,7 @@ The CSV file must have proper formatting:
 ### Access Issues
 
 If encountering permission errors:
-1. Verify API Client has all required permissions in ConductorOne
+1. Verify API Client has all required permissions in ConductorOne (Full Permissions)
 2. Check that application IDs are correct
 3. Verify the grant policy still exists and is properly configured
 
