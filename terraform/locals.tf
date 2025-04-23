@@ -8,98 +8,37 @@ locals {
   token_data   = jsondecode(data.http.conductorone_get_token.response_body)
   access_token = local.token_data.access_token
 
-  # Create page token arrays for each paginated API call
-  # Each index represents the next page token for the corresponding API call
-  primary_resource_types_responses = data.http.paginated_primary_app_resource_types[*].response_body
-  primary_resource_types_next_tokens = [
-    for i, response in local.primary_resource_types_responses :
-    local.extract_next_page_token(response)
-  ]
-
-  target_resource_types_responses = data.http.paginated_target_app_resource_types[*].response_body
-  target_resource_types_next_tokens = [
-    for i, response in local.target_resource_types_responses :
-    local.extract_next_page_token(response)
-  ]
-
-  primary_resources_responses = data.http.paginated_primary_app_resources[*].response_body
-  primary_resources_next_tokens = [
-    for i, response in local.primary_resources_responses :
-    local.extract_next_page_token(response)
-  ]
-
-  target_resources_responses = data.http.paginated_target_app_resources[*].response_body
-  target_resources_next_tokens = [
-    for i, response in local.target_resources_responses :
-    local.extract_next_page_token(response)
-  ]
-
-  primary_entitlements_responses = data.http.paginated_primary_app_entitlements[*].response_body
-  primary_entitlements_next_tokens = [
-    for i, response in local.primary_entitlements_responses :
-    local.extract_next_page_token(response)
-  ]
-
-  target_entitlements_responses = data.http.paginated_target_app_entitlements[*].response_body
-  target_entitlements_next_tokens = [
-    for i, response in local.target_entitlements_responses :
-    local.extract_next_page_token(response)
-  ]
-
-  catalogs_responses = data.http.paginated_list_catalogs[*].response_body
-  catalogs_next_tokens = [
-    for i, response in local.catalogs_responses :
-    local.extract_next_page_token(response)
-  ]
-
-  # Combine all responses into a single data structure
+  # Combine all responses from external data sources into a single data structure
+  # Note: The external script outputs a map like {"combined_list": "[...]"}.
+  # We need to jsondecode the outer result and then jsondecode the inner string value.
   primary_app_resource_types_combined_data = {
-    list = flatten([
-      for response_body in local.primary_resource_types_responses :
-      lookup(jsondecode(response_body), "list", [])
-    ])
+    list = try(jsondecode(data.external.primary_app_resource_types.result.combined_list), [])
   }
 
   target_app_resource_types_combined_data = {
-    list = flatten([
-      for response_body in local.target_resource_types_responses :
-      lookup(jsondecode(response_body), "list", [])
-    ])
+    list = try(jsondecode(data.external.target_app_resource_types.result.combined_list), [])
   }
 
   primary_app_resources_combined_data = {
-    list = flatten([
-      for response_body in local.primary_resources_responses :
-      lookup(jsondecode(response_body), "list", [])
-    ])
+    # Only decode if the query was actually run (i.e., URL wasn't empty)
+    list = local.primary_resource_type_id == null ? [] : try(jsondecode(data.external.primary_app_resources.result.combined_list), [])
   }
 
   target_app_resources_combined_data = {
-    list = flatten([
-      for response_body in local.target_resources_responses :
-      lookup(jsondecode(response_body), "list", [])
-    ])
+    # Only decode if the query was actually run (i.e., URL wasn't empty)
+    list = local.target_resource_type_id == null ? [] : try(jsondecode(data.external.target_app_resources.result.combined_list), [])
   }
 
   primary_app_entitlements_combined_data = {
-    list = flatten([
-      for response_body in local.primary_entitlements_responses :
-      lookup(jsondecode(response_body), "list", [])
-    ])
+    list = try(jsondecode(data.external.primary_app_entitlements.result.combined_list), [])
   }
 
   target_app_entitlements_combined_data = {
-    list = flatten([
-      for response_body in local.target_entitlements_responses :
-      lookup(jsondecode(response_body), "list", [])
-    ])
+    list = try(jsondecode(data.external.target_app_entitlements.result.combined_list), [])
   }
 
   existing_catalogs_combined_data = {
-    list = flatten([
-      for response_body in local.catalogs_responses :
-      lookup(jsondecode(response_body), "list", [])
-    ])
+    list = try(jsondecode(data.external.list_catalogs.result.combined_list), [])
   }
 
   # --- Primary App (e.g., Workday) Resource Types
@@ -127,22 +66,22 @@ locals {
     for res_response in lookup(local.primary_app_resources_combined_data, "list", []) :
     res_response.appResource.id => { id = res_response.appResource.id, display_name = res_response.appResource.displayName }
   }
-  
+
   primary_app_resources_by_name_map = {
     for res_response in lookup(local.primary_app_resources_combined_data, "list", []) :
     res_response.appResource.displayName => { id = res_response.appResource.id, display_name = res_response.appResource.displayName }
   }
-  
+
   target_app_resources_map = {
     for res_response in lookup(local.target_app_resources_combined_data, "list", []) :
     res_response.appResource.displayName => { id = res_response.appResource.id, display_name = res_response.appResource.displayName }
   }
-  
+
   target_app_entitlements_map = {
     for ent in lookup(local.target_app_entitlements_combined_data, "list", []) :
     "${ent.appEntitlement.appResourceId}:${lower(ent.appEntitlement.displayName)}" => { id = ent.appEntitlement.id, display_name = ent.appEntitlement.displayName, app_resource_id = ent.appEntitlement.appResourceId }
   }
-  
+
   primary_app_enrollment_entitlements_map = {
     for primary_resource_id, primary_resource_details in local.primary_app_resources_map :
     primary_resource_id => [
@@ -151,21 +90,21 @@ locals {
       if ent.appEntitlement.appResourceId == primary_resource_id && lower(ent.appEntitlement.displayName) == lower("${primary_resource_details.display_name} ${var.enrollment_entitlement_slug}")
     ]
     if length([
-      for ent in lookup(local.primary_app_entitlements_combined_data, "list", []) : 
-      ent.appEntitlement.id 
+      for ent in lookup(local.primary_app_entitlements_combined_data, "list", []) :
+      ent.appEntitlement.id
       if ent.appEntitlement.appResourceId == primary_resource_id && lower(ent.appEntitlement.displayName) == lower("${primary_resource_details.display_name} ${var.enrollment_entitlement_slug}")
     ]) > 0
   }
 
   # --- Logic based on CSV --- 
-  supervisory_orgs_in_csv = toset([
+  source_resources_in_csv = toset([
     for row in local.mapping_csv_data : row.source_resource
   ])
 
   # Map of Primary App Resources that are ALSO mentioned in the CSV
   managed_resources_map = {
     for id, details in local.primary_app_resources_map :
-    id => details if contains(local.supervisory_orgs_in_csv, details.display_name)
+    id => details if contains(local.source_resources_in_csv, details.display_name)
   }
 
   # Identify which managed primary resources need NEW access profiles

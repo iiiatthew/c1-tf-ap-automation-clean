@@ -13,7 +13,7 @@ variable "mapping_csv_content_base64" {
 variable "c1_server_url" {
   description = "ConductorOne server URL"
   type        = string
-  default     = "https://matthewscobell.conductor.one"
+  default     = "https://yourtenantname.conductor.one"
 }
 
 variable "c1_client_id" {
@@ -30,13 +30,13 @@ variable "c1_client_secret" {
 variable "primary_app_id" {
   description = "Primary application ID"
   type        = string
-  default     = "2vYNn3mgYsgCtfCi91ap4iatq7y"
+  default     = "your-primary-app-id"
 }
 
 variable "target_app_id" {
   description = "Target application ID"
   type        = string
-  default     = "2vnT1ftMsCmtlCH0ThPR46cgeGo"
+  default     = "your-target-app-id"
 }
 
 variable "primary_resource_type_name" {

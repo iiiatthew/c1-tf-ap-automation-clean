@@ -34,4 +34,4 @@ resource "conductorone_app_entitlement" "profile_policy_attachment" {
   app_id          = var.conductorone_app_id
   id              = each.value.id
   grant_policy_id = var.ap_request_policy_id
-} 
+}

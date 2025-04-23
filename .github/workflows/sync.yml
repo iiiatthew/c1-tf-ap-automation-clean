@@ -1,7 +1,6 @@
 name: Sync ConductorOne Access Profiles
 
 on:
-  # Uncomment to enable scheduling 
   # schedule:
     # - cron: '0 * * * *'    # Run every hour (60 minutes)
     # - cron: '* * * * *'  # Run every minute (for testing)
@@ -19,6 +18,21 @@ jobs:
         with:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
         
+      # --- NEW: Setup Python Environment ---
+      - name: Set up Python 3
+        uses: actions/setup-python@v4 # Use a specific version like v4 or v5
+        with:
+          python-version: '3.x' # Specify Python version
+
+      # - name: Install Python dependencies # REMOVED
+      #   run: |                           # REMOVED
+      #     python3 -m pip install --upgrade pip # REMOVED
+      #     pip3 install -r terraform/scripts/requirements.txt # REMOVED
+          
+      - name: Make pagination script executable
+        run: chmod +x terraform/scripts/fetch_paginated_data.py
+      # --- END: Setup Python Environment ---
+          
       # # Include this step only if using an S3 backend
       # - name: Configure AWS credentials
       #   if: false  # Change to true if using AWS
