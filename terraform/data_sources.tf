@@ -15,45 +15,41 @@ data "http" "conductorone_get_token" {
   request_body = "grant_type=client_credentials&client_id=${var.c1_client_id}&client_secret=${var.c1_client_secret}"
 }
 
-# Get resource types for Primary App 
+# DEPRECATED - Kept for backward compatibility (use paginated versions instead)
+# These resources are now intentionally kept minimal/empty as they are replaced by the 
+# paginated versions in pagination.tf
+
 data "http" "primary_app_resource_types" {
-  url             = "${var.c1_server_url}/api/v1/apps/${var.primary_app_id}/resource_types"
+  url             = "${var.c1_server_url}/api/v1/apps/${var.primary_app_id}/resource_types?page_size=1"
   request_headers = { Accept = "application/json", Authorization = "Bearer ${local.access_token}" }
 }
 
-# Get Primary App Resources 
 data "http" "primary_app_resources" {
-  url             = local.primary_resource_type_id == null ? "" : "${var.c1_server_url}/api/v1/apps/${var.primary_app_id}/resource_types/${local.primary_resource_type_id}/resources"
+  url             = local.primary_resource_type_id == null ? "" : "${var.c1_server_url}/api/v1/apps/${var.primary_app_id}/resource_types/${local.primary_resource_type_id}/resources?page_size=1"
   request_headers = { Accept = "application/json", Authorization = "Bearer ${local.access_token}" }
 }
 
-# Get resource types for Target App  
 data "http" "target_app_resource_types" {
-  url             = "${var.c1_server_url}/api/v1/apps/${var.target_app_id}/resource_types"
+  url             = "${var.c1_server_url}/api/v1/apps/${var.target_app_id}/resource_types?page_size=1"
   request_headers = { Accept = "application/json", Authorization = "Bearer ${local.access_token}" }
 }
 
-# Get Target App Resources 
 data "http" "target_app_resources" {
-  url             = local.target_resource_type_id == null ? "" : "${var.c1_server_url}/api/v1/apps/${var.target_app_id}/resource_types/${local.target_resource_type_id}/resources"
+  url             = local.target_resource_type_id == null ? "" : "${var.c1_server_url}/api/v1/apps/${var.target_app_id}/resource_types/${local.target_resource_type_id}/resources?page_size=1"
   request_headers = { Accept = "application/json", Authorization = "Bearer ${local.access_token}" }
 }
 
-# Get Primary App Entitlements 
 data "http" "primary_app_entitlements" {
-  url             = "${var.c1_server_url}/api/v1/apps/${var.primary_app_id}/entitlements"
+  url             = "${var.c1_server_url}/api/v1/apps/${var.primary_app_id}/entitlements?page_size=1"
   request_headers = { Accept = "application/json", Authorization = "Bearer ${local.access_token}" }
 }
 
-# Get Target App Entitlements 
 data "http" "target_app_entitlements" {
-  url             = "${var.c1_server_url}/api/v1/apps/${var.target_app_id}/entitlements"
+  url             = "${var.c1_server_url}/api/v1/apps/${var.target_app_id}/entitlements?page_size=1"
   request_headers = { Accept = "application/json", Authorization = "Bearer ${local.access_token}" }
 }
 
-# Get existing Catalogs (Access Profiles) via HTTP API
 data "http" "list_catalogs" {
-  url             = "${var.c1_server_url}/api/v1/catalogs"
+  url             = "${var.c1_server_url}/api/v1/catalogs?page_size=1"
   request_headers = { Accept = "application/json", Authorization = "Bearer ${local.access_token}" }
 }
-

@@ -13,7 +13,7 @@ variable "mapping_csv_content_base64" {
 variable "c1_server_url" {
   description = "ConductorOne server URL"
   type        = string
-  default     = "https://yourtenant.conductor.one"
+  default     = "https://matthewscobell.conductor.one"
 }
 
 variable "c1_client_id" {
@@ -30,31 +30,31 @@ variable "c1_client_secret" {
 variable "primary_app_id" {
   description = "Primary application ID"
   type        = string
-  default     = "<source-app-id>"
+  default     = "2vYNn3mgYsgCtfCi91ap4iatq7y"
 }
 
 variable "target_app_id" {
   description = "Target application ID"
   type        = string
-  default     = "<target-app-id>"
+  default     = "2vnT1ftMsCmtlCH0ThPR46cgeGo"
 }
 
 variable "primary_resource_type_name" {
   description = "The exact display name of the Resource Type in the Primary App to manage (e.g., 'supervisory organization')."
   type        = string
-  default     = "<primary-resource-type-name>"
+  default     = "supervisory organization"
 }
 
 variable "target_resource_type_name" {
   description = "The exact display name of the Resource Type in the Target App being mapped (e.g., 'repository')."
   type        = string
-  default     = "<target-resource-type-name>"
+  default     = "repository"
 }
 
 variable "enrollment_entitlement_slug" {
   description = "The slug used to construct the enrollment entitlement display name (e.g., 'member' results in '<Resource Name> member')."
   type        = string
-  default     = "<enrollment-entitlement-slug>"
+  default     = "member"
 }
 
 variable "conductorone_app_id" {
@@ -67,4 +67,10 @@ variable "ap_request_policy_id" {
   description = "Access request policy ID"
   type        = string
   default     = "2ouELGvYbcY6WZJYB52iPi0P1Wm"
+}
+
+variable "api_page_size" {
+  description = "Number of results to return per page for API requests (10-100)"
+  type        = number
+  default     = 100
 }

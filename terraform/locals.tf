@@ -8,61 +8,153 @@ locals {
   token_data   = jsondecode(data.http.conductorone_get_token.response_body)
   access_token = local.token_data.access_token
 
-  # Decode API responses 
-  # --- Primary App (e.g., Workday)
-  primary_app_resource_types_data = try(jsondecode(data.http.primary_app_resource_types.response_body), null)
+  # Create page token arrays for each paginated API call
+  # Each index represents the next page token for the corresponding API call
+  primary_resource_types_responses = data.http.paginated_primary_app_resource_types[*].response_body
+  primary_resource_types_next_tokens = [
+    for i, response in local.primary_resource_types_responses :
+    local.extract_next_page_token(response)
+  ]
+
+  target_resource_types_responses = data.http.paginated_target_app_resource_types[*].response_body
+  target_resource_types_next_tokens = [
+    for i, response in local.target_resource_types_responses :
+    local.extract_next_page_token(response)
+  ]
+
+  primary_resources_responses = data.http.paginated_primary_app_resources[*].response_body
+  primary_resources_next_tokens = [
+    for i, response in local.primary_resources_responses :
+    local.extract_next_page_token(response)
+  ]
+
+  target_resources_responses = data.http.paginated_target_app_resources[*].response_body
+  target_resources_next_tokens = [
+    for i, response in local.target_resources_responses :
+    local.extract_next_page_token(response)
+  ]
+
+  primary_entitlements_responses = data.http.paginated_primary_app_entitlements[*].response_body
+  primary_entitlements_next_tokens = [
+    for i, response in local.primary_entitlements_responses :
+    local.extract_next_page_token(response)
+  ]
+
+  target_entitlements_responses = data.http.paginated_target_app_entitlements[*].response_body
+  target_entitlements_next_tokens = [
+    for i, response in local.target_entitlements_responses :
+    local.extract_next_page_token(response)
+  ]
+
+  catalogs_responses = data.http.paginated_list_catalogs[*].response_body
+  catalogs_next_tokens = [
+    for i, response in local.catalogs_responses :
+    local.extract_next_page_token(response)
+  ]
+
+  # Combine all responses into a single data structure
+  primary_app_resource_types_combined_data = {
+    list = flatten([
+      for response_body in local.primary_resource_types_responses :
+      lookup(jsondecode(response_body), "list", [])
+    ])
+  }
+
+  target_app_resource_types_combined_data = {
+    list = flatten([
+      for response_body in local.target_resource_types_responses :
+      lookup(jsondecode(response_body), "list", [])
+    ])
+  }
+
+  primary_app_resources_combined_data = {
+    list = flatten([
+      for response_body in local.primary_resources_responses :
+      lookup(jsondecode(response_body), "list", [])
+    ])
+  }
+
+  target_app_resources_combined_data = {
+    list = flatten([
+      for response_body in local.target_resources_responses :
+      lookup(jsondecode(response_body), "list", [])
+    ])
+  }
+
+  primary_app_entitlements_combined_data = {
+    list = flatten([
+      for response_body in local.primary_entitlements_responses :
+      lookup(jsondecode(response_body), "list", [])
+    ])
+  }
+
+  target_app_entitlements_combined_data = {
+    list = flatten([
+      for response_body in local.target_entitlements_responses :
+      lookup(jsondecode(response_body), "list", [])
+    ])
+  }
+
+  existing_catalogs_combined_data = {
+    list = flatten([
+      for response_body in local.catalogs_responses :
+      lookup(jsondecode(response_body), "list", [])
+    ])
+  }
+
+  # --- Primary App (e.g., Workday) Resource Types
   primary_resource_type_ids = [
-    for item in lookup(local.primary_app_resource_types_data, "list", []) :
+    for item in lookup(local.primary_app_resource_types_combined_data, "list", []) :
     item.appResourceType.id if lower(item.appResourceType.displayName) == lower(var.primary_resource_type_name)
   ]
-  primary_resource_type_id       = length(local.primary_resource_type_ids) == 1 ? local.primary_resource_type_ids[0] : null
-  primary_app_resources_api_data = try(jsondecode(data.http.primary_app_resources.response_body), null)
+  primary_resource_type_id = length(local.primary_resource_type_ids) >= 1 ? local.primary_resource_type_ids[0] : null
 
-  # --- Target App (e.g., GitHub)
-  target_app_resource_types_data = try(jsondecode(data.http.target_app_resource_types.response_body), null)
+  # --- Target App (e.g., GitHub) Resource Types
   target_resource_type_ids = [
-    for item in lookup(local.target_app_resource_types_data, "list", []) :
+    for item in lookup(local.target_app_resource_types_combined_data, "list", []) :
     item.appResourceType.id if lower(item.appResourceType.displayName) == lower(var.target_resource_type_name)
   ]
-  target_resource_type_id       = length(local.target_resource_type_ids) == 1 ? local.target_resource_type_ids[0] : null
-  target_app_resources_api_data = try(jsondecode(data.http.target_app_resources.response_body), null)
-
-  # --- Entitlements & Existing Profiles (Catalogs) ---
-  primary_app_entitlements_api_data = try(jsondecode(data.http.primary_app_entitlements.response_body), null)
-  target_app_entitlements_api_data  = try(jsondecode(data.http.target_app_entitlements.response_body), null)
-  existing_catalogs_data            = try(jsondecode(data.http.list_catalogs.response_body), null)
+  target_resource_type_id = length(local.target_resource_type_ids) >= 1 ? local.target_resource_type_ids[0] : null
 
   # --- Existing Profiles Map --- 
   existing_profiles_by_id_map = {
-    for catalog in lookup(local.existing_catalogs_data, "list", []) :
+    for catalog in lookup(local.existing_catalogs_combined_data, "list", []) :
     catalog.requestCatalog.id => catalog.requestCatalog
   }
 
   # --- Processed/Mapped Data --- 
-  primary_app_resources_map = local.primary_app_resources_api_data == null ? {} : {
-    for res_response in lookup(local.primary_app_resources_api_data, "list", []) :
+  primary_app_resources_map = {
+    for res_response in lookup(local.primary_app_resources_combined_data, "list", []) :
     res_response.appResource.id => { id = res_response.appResource.id, display_name = res_response.appResource.displayName }
   }
-  primary_app_resources_by_name_map = local.primary_app_resources_api_data == null ? {} : {
-    for res_response in lookup(local.primary_app_resources_api_data, "list", []) :
+  
+  primary_app_resources_by_name_map = {
+    for res_response in lookup(local.primary_app_resources_combined_data, "list", []) :
     res_response.appResource.displayName => { id = res_response.appResource.id, display_name = res_response.appResource.displayName }
   }
-  target_app_resources_map = local.target_app_resources_api_data == null ? {} : {
-    for res_response in lookup(local.target_app_resources_api_data, "list", []) :
+  
+  target_app_resources_map = {
+    for res_response in lookup(local.target_app_resources_combined_data, "list", []) :
     res_response.appResource.displayName => { id = res_response.appResource.id, display_name = res_response.appResource.displayName }
   }
+  
   target_app_entitlements_map = {
-    for ent in lookup(local.target_app_entitlements_api_data, "list", []) :
+    for ent in lookup(local.target_app_entitlements_combined_data, "list", []) :
     "${ent.appEntitlement.appResourceId}:${lower(ent.appEntitlement.displayName)}" => { id = ent.appEntitlement.id, display_name = ent.appEntitlement.displayName, app_resource_id = ent.appEntitlement.appResourceId }
   }
+  
   primary_app_enrollment_entitlements_map = {
     for primary_resource_id, primary_resource_details in local.primary_app_resources_map :
     primary_resource_id => [
-      for ent in lookup(local.primary_app_entitlements_api_data, "list", []) :
+      for ent in lookup(local.primary_app_entitlements_combined_data, "list", []) :
       ent.appEntitlement.id
       if ent.appEntitlement.appResourceId == primary_resource_id && lower(ent.appEntitlement.displayName) == lower("${primary_resource_details.display_name} ${var.enrollment_entitlement_slug}")
     ]
-    if length([for ent in lookup(local.primary_app_entitlements_api_data, "list", []) : ent.appEntitlement.id if ent.appEntitlement.appResourceId == primary_resource_id && lower(ent.appEntitlement.displayName) == lower("${primary_resource_details.display_name} ${var.enrollment_entitlement_slug}")]) > 0
+    if length([
+      for ent in lookup(local.primary_app_entitlements_combined_data, "list", []) : 
+      ent.appEntitlement.id 
+      if ent.appEntitlement.appResourceId == primary_resource_id && lower(ent.appEntitlement.displayName) == lower("${primary_resource_details.display_name} ${var.enrollment_entitlement_slug}")
+    ]) > 0
   }
 
   # --- Logic based on CSV --- 
