@@ -10,6 +10,7 @@ notes.txt
 *.c1z
 temp/
 tmp/
+.*.md
 
 # Local .terraform directories
 **/.terraform/*
